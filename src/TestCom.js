@@ -25,6 +25,9 @@ const TestCom = () => {
     const [jsonInput, setJsonInput] = useState('');
     const [postResponse, setPostResponse] = useState(null);
     const [postLoading, setPostLoading] = useState(false);
+    const [personnesInput, setPersonnesInput] = useState('');
+    const [personnesResponse, setPersonnesResponse] = useState(null);
+    const [personnesLoading, setPersonnesLoading] = useState(false);
 
     useEffect(() => {
         const savedToken = localStorage.getItem('access_token');
@@ -264,6 +267,47 @@ const TestCom = () => {
             setError(err.message);
         } finally {
             setPostLoading(false);
+        }
+    };
+
+    const sendPersonnesPostRequest = async () => {
+        if (!personnesInput.trim()) {
+            setError('Veuillez entrer des données JSON pour personnes');
+            return;
+        }
+
+        let parsedData;
+        try {
+            parsedData = JSON.parse(personnesInput);
+        } catch (err) {
+            setError('JSON invalide: ' + err.message);
+            return;
+        }
+
+        setPersonnesLoading(true);
+        setError('');
+
+        try {
+            const response = await fetchWithAuth('/api/personnes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(parsedData)
+            });
+
+            const data = await response.json();
+            
+            if (response.ok) {
+                setPersonnesResponse(data);
+            } else {
+                setError(data.error || 'Erreur lors de l\'envoi POST personnes');
+                setPersonnesResponse(data);
+            }
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setPersonnesLoading(false);
         }
     };
 
@@ -787,6 +831,92 @@ const TestCom = () => {
                                 icon={<FiSend size={20} />}
                                 data={postResponse}
                                 color="primary"
+                            />
+                        )}
+
+                        {/* Personnes POST Section */}
+                        <div style={{ 
+                            background: tokens.surface,
+                            border: `1px solid ${tokens.border}`,
+                            borderRadius: tokens.radius,
+                            padding: '16px',
+                            marginBottom: '24px'
+                        }}>
+                            <h3 style={{ 
+                                color: tokens.text,
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                margin: '0 0 12px 0',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}>
+                                <FiSend size={16} />
+                                Envoyer JSON en POST - Personnes
+                            </h3>
+                            <div style={{ 
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '12px'
+                            }}>
+                                <textarea
+                                    placeholder="Entrez vos données JSON pour personnes ici..."
+                                    value={personnesInput}
+                                    onChange={(e) => setPersonnesInput(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        minHeight: '120px',
+                                        padding: '12px',
+                                        border: `1px solid ${tokens.border}`,
+                                        borderRadius: tokens.radius,
+                                        fontSize: '14px',
+                                        background: tokens.bg,
+                                        color: tokens.text,
+                                        fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
+                                        resize: 'vertical',
+                                        lineHeight: '1.5'
+                                    }}
+                                />
+                                <div style={{ 
+                                    display: 'flex',
+                                    justifyContent: 'flex-end',
+                                    gap: '8px'
+                                }}>
+                                    <Btn
+                                        onClick={() => setPersonnesInput('')}
+                                        variant="secondary"
+                                        size="sm"
+                                    >
+                                        Effacer
+                                    </Btn>
+                                    <Btn
+                                        onClick={sendPersonnesPostRequest}
+                                        disabled={personnesLoading || !personnesInput.trim()}
+                                        variant="primary"
+                                        size="sm"
+                                    >
+                                        {personnesLoading ? (
+                                            <>
+                                                <FiRefreshCw style={{ animation: 'spin 1s linear infinite' }} />
+                                                Envoi...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FiSend size={14} />
+                                                Envoyer Personnes
+                                            </>
+                                        )}
+                                    </Btn>
+                                </div>
+                            </div>
+                        </div>
+
+                        {personnesResponse && (
+                            <JsonDisplay
+                                title="Réponse POST Personnes"
+                                icon={<FiSend size={20} />}
+                                data={personnesResponse}
+                                color="success"
                             />
                         )}
 
