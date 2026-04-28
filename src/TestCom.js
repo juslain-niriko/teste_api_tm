@@ -247,7 +247,7 @@ const TestCom = () => {
         setError('');
 
         try {
-            const response = await fetchWithAuth('/api/dossier', {
+            const response = await fetchWithAuth('/api/dossiers/sync', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
