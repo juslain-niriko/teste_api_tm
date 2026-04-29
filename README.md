@@ -15,6 +15,7 @@ Application React pour tester une API avec authentification JWT.
   - `/api/types-moraux` - Types moral
   - `/api/reperes` - Positions riverain
   - `/api/statuts-terrains` - Statuts terrain
+  - `/api/dossiers/statuts` - Dossiers statuts
   - `/api/territoires` - Territoire hiérarchique
   - `/api/cartes` - Fonds images MBTiles
 

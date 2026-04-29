@@ -28,6 +28,7 @@ const TestCom = () => {
     const [personnesInput, setPersonnesInput] = useState('');
     const [personnesResponse, setPersonnesResponse] = useState(null);
     const [personnesLoading, setPersonnesLoading] = useState(false);
+    const [dossiersStatuts, setDossiersStatuts] = useState([]);
 
     useEffect(() => {
         const savedToken = localStorage.getItem('access_token');
@@ -128,6 +129,7 @@ const TestCom = () => {
         setStatutTerrain([]);
         setSingleTerritoire(null);
         setFondImages([]);
+        setDossiersStatuts([]);
 
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
@@ -186,6 +188,16 @@ const TestCom = () => {
             const response = await fetchWithAuth('/api/statuts-terrains', {}, t, r);
             const data = await response.json();
             if (response.ok) setStatutTerrain(data);
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    const fetchDossiersStatuts = async (t = token, r = refreshToken) => {
+        try {
+            const response = await fetchWithAuth('/api/dossiers/statuts', {}, t, r);
+            const data = await response.json();
+            if (response.ok) setDossiersStatuts(data);
         } catch (err) {
             setError(err.message);
         }
@@ -542,6 +554,28 @@ const TestCom = () => {
                                     icon={<FiMap size={20} />}
                                     data={statutTerrain}
                                     color="danger"
+                                />
+                            )}
+                        </div>
+
+                        {/* Section Dossiers Statuts */}
+                        <div style={{ marginBottom: '24px' }}>
+                            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+                                <Btn
+                                    onClick={() => fetchDossiersStatuts()}
+                                    variant="secondary"
+                                    size="md"
+                                >
+                                    <FiRefreshCw size={16} />
+                                    Dossiers Statuts
+                                </Btn>
+                            </div>
+                            {dossiersStatuts && (
+                                <JsonDisplay
+                                    title="Dossiers Statuts"
+                                    icon={<FiMap size={20} />}
+                                    data={dossiersStatuts}
+                                    color="warning"
                                 />
                             )}
                         </div>
