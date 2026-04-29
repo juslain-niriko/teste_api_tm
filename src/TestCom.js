@@ -29,6 +29,8 @@ const TestCom = () => {
     const [personnesResponse, setPersonnesResponse] = useState(null);
     const [personnesLoading, setPersonnesLoading] = useState(false);
     const [dossiersStatuts, setDossiersStatuts] = useState([]);
+    const [agentCollecteId, setAgentCollecteId] = useState('');
+    const [sinceDate, setSinceDate] = useState('');
 
     useEffect(() => {
         const savedToken = localStorage.getItem('access_token');
@@ -130,6 +132,8 @@ const TestCom = () => {
         setSingleTerritoire(null);
         setFondImages([]);
         setDossiersStatuts([]);
+        setAgentCollecteId('');
+        setSinceDate('');
 
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
@@ -195,7 +199,12 @@ const TestCom = () => {
 
     const fetchDossiersStatuts = async (t = token, r = refreshToken) => {
         try {
-            const response = await fetchWithAuth('/api/dossiers/statuts', {}, t, r);
+            const params = new URLSearchParams();
+            if (agentCollecteId) params.append('agent_collecte_id', agentCollecteId);
+            if (sinceDate) params.append('since', sinceDate);
+            
+            const url = params.toString() ? `/api/dossiers/statuts?${params.toString()}` : '/api/dossiers/statuts';
+            const response = await fetchWithAuth(url, {}, t, r);
             const data = await response.json();
             if (response.ok) setDossiersStatuts(data);
         } catch (err) {
@@ -560,15 +569,73 @@ const TestCom = () => {
 
                         {/* Section Dossiers Statuts */}
                         <div style={{ marginBottom: '24px' }}>
-                            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                                <Btn
-                                    onClick={() => fetchDossiersStatuts()}
-                                    variant="secondary"
-                                    size="md"
-                                >
-                                    <FiRefreshCw size={16} />
-                                    Dossiers Statuts
-                                </Btn>
+                            {/* Parameters Input Section */}
+                            <div style={{ 
+                                background: tokens.surface,
+                                border: `1px solid ${tokens.border}`,
+                                borderRadius: tokens.radius,
+                                padding: '16px',
+                                marginBottom: '16px'
+                            }}>
+                                <h3 style={{ 
+                                    color: tokens.text,
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    margin: '0 0 12px 0',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px'
+                                }}>
+                                    <FiMap size={16} />
+                                    Paramètres Dossiers Statuts
+                                </h3>
+                                <div style={{ 
+                                    display: 'flex',
+                                    gap: '12px',
+                                    alignItems: 'center',
+                                    flexWrap: 'wrap'
+                                }}>
+                                    <input
+                                        type="text"
+                                        placeholder="Agent Collecte ID (ex: 123)"
+                                        value={agentCollecteId}
+                                        onChange={(e) => setAgentCollecteId(e.target.value)}
+                                        style={{
+                                            flex: 1,
+                                            minWidth: '150px',
+                                            padding: '8px 12px',
+                                            border: `1px solid ${tokens.border}`,
+                                            borderRadius: tokens.radius,
+                                            fontSize: '14px',
+                                            background: tokens.bg,
+                                            color: tokens.text
+                                        }}
+                                    />
+                                    <input
+                                        type="date"
+                                        placeholder="Date depuis (YYYY-MM-DD)"
+                                        value={sinceDate}
+                                        onChange={(e) => setSinceDate(e.target.value)}
+                                        style={{
+                                            flex: 1,
+                                            minWidth: '150px',
+                                            padding: '8px 12px',
+                                            border: `1px solid ${tokens.border}`,
+                                            borderRadius: tokens.radius,
+                                            fontSize: '14px',
+                                            background: tokens.bg,
+                                            color: tokens.text
+                                        }}
+                                    />
+                                    <Btn
+                                        onClick={() => fetchDossiersStatuts()}
+                                        variant="secondary"
+                                        size="md"
+                                    >
+                                        <FiRefreshCw size={16} />
+                                        Dossiers Statuts
+                                    </Btn>
+                                </div>
                             </div>
                             {dossiersStatuts && (
                                 <JsonDisplay
