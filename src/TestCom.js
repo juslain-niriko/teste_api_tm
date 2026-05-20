@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiLogIn, FiLogOut, FiRefreshCw, FiUsers, FiMap, FiAlertCircle, FiDownload, FiImage, FiSend } from 'react-icons/fi';
+import { FiLogIn, FiLogOut, FiRefreshCw, FiUsers, FiMap, FiAlertCircle, FiDownload, FiImage, FiSend, FiShield, FiFolder } from 'react-icons/fi';
 import tokens from './ui/tokens';
 import Btn from './ui/Btn';
 import Card from './ui/Card';
@@ -31,6 +31,20 @@ const TestCom = () => {
     const [dossiersStatuts, setDossiersStatuts] = useState([]);
     const [agentCollecteId, setAgentCollecteId] = useState('');
     const [sinceDate, setSinceDate] = useState('');
+
+    // Fiplof API state
+    const [fiplofToken, setFiplofToken] = useState(null);
+    const [fiplofLogin, setFiplofLogin] = useState('');
+    const [fiplofPassword, setFiplofPassword] = useState('');
+    const [fiplofBatchInput, setFiplofBatchInput] = useState('');
+    const [fiplofBatchResponse, setFiplofBatchResponse] = useState(null);
+    const [fiplofBatchLoading, setFiplofBatchLoading] = useState(false);
+    const [fiplofReturnedData, setFiplofReturnedData] = useState(null);
+    const [fiplofReturnedLoading, setFiplofReturnedLoading] = useState(false);
+    const [fiplofRetourCode, setFiplofRetourCode] = useState('');
+    const [fiplofRetourStatut, setFiplofRetourStatut] = useState('RETURNED');
+    const [fiplofRetourResponse, setFiplofRetourResponse] = useState(null);
+    const [fiplofRetourLoading, setFiplofRetourLoading] = useState(false);
 
     useEffect(() => {
         const savedToken = localStorage.getItem('access_token');
@@ -329,6 +343,91 @@ const TestCom = () => {
             setError(err.message);
         } finally {
             setPersonnesLoading(false);
+        }
+    };
+
+    // ========== Fiplof Handlers ==========
+
+    const handleFiplofLogin = async () => {
+        if (!fiplofLogin || !fiplofPassword) return;
+        try {
+            const res = await fetch('http://localhost:8005/api/Fiplof_tm/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ login: fiplofLogin, password: fiplofPassword })
+            });
+            const data = await res.json();
+            if (data.success && data.data?.access_token) {
+                setFiplofToken(data.data.access_token);
+                setError('');
+            } else {
+                setError(data.data?.error || 'Échec connexion Fiplof');
+            }
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    const sendFiplofBatch = async () => {
+        if (!fiplofBatchInput.trim() || !fiplofToken) return;
+        let parsed;
+        try { parsed = JSON.parse(fiplofBatchInput); }
+        catch (e) { setError('JSON invalide: ' + e.message); return; }
+
+        setFiplofBatchLoading(true);
+        setError('');
+        try {
+            const res = await fetch('http://localhost:8005/api/Fiplof_tm/fiplof-info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + fiplofToken
+                },
+                body: JSON.stringify(parsed)
+            });
+            const data = await res.json();
+            setFiplofBatchResponse(data);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setFiplofBatchLoading(false);
+        }
+    };
+
+    const fetchFiplofReturned = async () => {
+        if (!fiplofToken) return;
+        setFiplofReturnedLoading(true);
+        setError('');
+        try {
+            const res = await fetch('http://localhost:8005/api/Fiplof_tm/returned', {
+                headers: { 'Authorization': 'Bearer ' + fiplofToken }
+            });
+            const data = await res.json();
+            setFiplofReturnedData(data);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setFiplofReturnedLoading(false);
+        }
+    };
+
+    const updateFiplofStatut = async () => {
+        if (!fiplofRetourCode || !fiplofToken) return;
+        setFiplofRetourLoading(true);
+        setError('');
+        try {
+            const url = 'http://localhost:8005/api/Fiplof_tm/'
+                + encodeURIComponent(fiplofRetourCode) + '/statut?statut=' + encodeURIComponent(fiplofRetourStatut);
+            const res = await fetch(url, {
+                method: 'PUT',
+                headers: { 'Authorization': 'Bearer ' + fiplofToken }
+            });
+            const data = await res.json();
+            setFiplofRetourResponse(data);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setFiplofRetourLoading(false);
         }
     };
 
@@ -1021,14 +1120,182 @@ const TestCom = () => {
                             />
                         )}
 
-                        {usersResponse && (
-                            <JsonDisplay
-                                title="Utilisateurs API Response"
-                                icon={<FiUsers size={20} />}
-                                data={usersResponse}
-                                color="success"
-                            />
-                        )}
+                        {/* ========== FIPLOF API SECTION ========== */}
+                        <div style={{
+                            background: tokens.surface,
+                            border: `1px solid ${tokens.border}`,
+                            borderRadius: tokens.radius,
+                            padding: '16px',
+                            marginBottom: '24px'
+                        }}>
+                            <h3 style={{
+                                color: tokens.text,
+                                fontSize: '16px',
+                                fontWeight: '700',
+                                margin: '0 0 16px 0',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}>
+                                <FiShield size={20} style={{ color: tokens.primary }} />
+                                Fiplof API
+                            </h3>
+
+                            {/* Auth */}
+                            <div style={{
+                                background: tokens.surfaceAlt,
+                                padding: '12px',
+                                borderRadius: tokens.radius,
+                                marginBottom: '16px'
+                            }}>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                    <input
+                                        type="text" placeholder="Login Fiplof"
+                                        value={fiplofLogin}
+                                        onChange={(e) => setFiplofLogin(e.target.value)}
+                                        style={{
+                                            flex: 1, minWidth: '120px', padding: '8px 12px',
+                                            border: `1px solid ${tokens.border}`, borderRadius: tokens.radius,
+                                            fontSize: '14px', background: tokens.bg, color: tokens.text
+                                        }}
+                                    />
+                                    <input
+                                        type="password" placeholder="Mot de passe"
+                                        value={fiplofPassword}
+                                        onChange={(e) => setFiplofPassword(e.target.value)}
+                                        style={{
+                                            flex: 1, minWidth: '120px', padding: '8px 12px',
+                                            border: `1px solid ${tokens.border}`, borderRadius: tokens.radius,
+                                            fontSize: '14px', background: tokens.bg, color: tokens.text
+                                        }}
+                                    />
+                                    <Btn onClick={handleFiplofLogin} variant="primary" size="sm">
+                                        <FiLogIn size={14} />
+                                        Connexion
+                                    </Btn>
+                                </div>
+                                {fiplofToken && (
+                                    <div style={{
+                                        marginTop: '8px', fontSize: '11px', color: tokens.success,
+                                        fontFamily: 'monospace', wordBreak: 'break-all'
+                                    }}>
+                                        Token: {fiplofToken.substring(0, 60)}...
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* fiplof-info */}
+                            <div style={{ marginBottom: '16px' }}>
+                                <label style={{ fontSize: '13px', fontWeight: '600', color: tokens.text, marginBottom: '6px', display: 'block' }}>
+                                    <FiSend size={14} style={{ marginRight: '4px' }} />
+                                    POST /api/Fiplof_tm/fiplof-info
+                                </label>
+                                <textarea
+                                    placeholder='{"version_schema":"1.0","source_systeme":"TopoManager","type_message":"BATCH_DEMANDE","commune":"...","demandes":[...]}'
+                                    value={fiplofBatchInput}
+                                    onChange={(e) => setFiplofBatchInput(e.target.value)}
+                                    style={{
+                                        width: '100%', minHeight: '80px', padding: '10px',
+                                        border: `1px solid ${tokens.border}`, borderRadius: tokens.radius,
+                                        fontSize: '13px', background: tokens.bg, color: tokens.text,
+                                        fontFamily: 'monospace', resize: 'vertical', marginBottom: '8px'
+                                    }}
+                                />
+                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                    <Btn onClick={() => setFiplofBatchInput('')} variant="secondary" size="sm">Effacer</Btn>
+                                    <Btn
+                                        onClick={sendFiplofBatch}
+                                        disabled={fiplofBatchLoading || !fiplofBatchInput.trim() || !fiplofToken}
+                                        variant="primary" size="sm"
+                                    >
+                                        {fiplofBatchLoading ? 'Envoi...' : 'Envoyer batch'}
+                                    </Btn>
+                                </div>
+                            </div>
+                            {fiplofBatchResponse && (
+                                <JsonDisplay
+                                    title="Réponse fiplof-info"
+                                    icon={<FiSend size={20} />}
+                                    data={fiplofBatchResponse}
+                                    color="primary"
+                                />
+                            )}
+
+                            <hr style={{ border: `1px solid ${tokens.border}`, margin: '16px 0' }} />
+
+                            {/* Returned */}
+                            <div style={{ marginBottom: '16px' }}>
+                                <label style={{ fontSize: '13px', fontWeight: '600', color: tokens.text, marginBottom: '8px', display: 'block' }}>
+                                    <FiFolder size={14} style={{ marginRight: '4px' }} />
+                                    GET /api/Fiplof_tm/returned
+                                </label>
+                                <Btn
+                                    onClick={fetchFiplofReturned}
+                                    disabled={fiplofReturnedLoading || !fiplofToken}
+                                    variant="secondary" size="sm"
+                                >
+                                    {fiplofReturnedLoading ? 'Chargement...' : 'Charger les retours'}
+                                </Btn>
+                            </div>
+                            {fiplofReturnedData && (
+                                <JsonDisplay
+                                    title="Retours externes"
+                                    icon={<FiFolder size={20} />}
+                                    data={fiplofReturnedData}
+                                    color="info"
+                                />
+                            )}
+
+                            <hr style={{ border: `1px solid ${tokens.border}`, margin: '16px 0' }} />
+
+                            {/* Statut */}
+                            <div style={{ marginBottom: '8px' }}>
+                                <label style={{ fontSize: '13px', fontWeight: '600', color: tokens.text, marginBottom: '8px', display: 'block' }}>
+                                    <FiShield size={14} style={{ marginRight: '4px' }} />
+                                    PUT /api/Fiplof_tm/{'{code_parcelle}'}/statut
+                                </label>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                    <input
+                                        type="text" placeholder="Code parcelle (ex: PARC001)"
+                                        value={fiplofRetourCode}
+                                        onChange={(e) => setFiplofRetourCode(e.target.value)}
+                                        style={{
+                                            flex: 1, minWidth: '150px', padding: '8px 12px',
+                                            border: `1px solid ${tokens.border}`, borderRadius: tokens.radius,
+                                            fontSize: '14px', background: tokens.bg, color: tokens.text
+                                        }}
+                                    />
+                                    <select
+                                        value={fiplofRetourStatut}
+                                        onChange={(e) => setFiplofRetourStatut(e.target.value)}
+                                        style={{
+                                            padding: '8px 12px',
+                                            border: `1px solid ${tokens.border}`, borderRadius: tokens.radius,
+                                            fontSize: '14px', background: tokens.bg, color: tokens.text
+                                        }}
+                                    >
+                                        <option value="RETURNED">RETURNED</option>
+                                        <option value="VIEWED">VIEWED</option>
+                                        <option value="">"" (vide)</option>
+                                    </select>
+                                    <Btn
+                                        onClick={updateFiplofStatut}
+                                        disabled={fiplofRetourLoading || !fiplofRetourCode || !fiplofToken}
+                                        variant="primary" size="sm"
+                                    >
+                                        {fiplofRetourLoading ? 'Mise à jour...' : 'Mettre à jour'}
+                                    </Btn>
+                                </div>
+                            </div>
+                            {fiplofRetourResponse && (
+                                <JsonDisplay
+                                    title="Réponse statut"
+                                    icon={<FiShield size={20} />}
+                                    data={fiplofRetourResponse}
+                                    color="warning"
+                                />
+                            )}
+                        </div>
 
                         <div style={{ 
                             background: tokens.primaryBg,
