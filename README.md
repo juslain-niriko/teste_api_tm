@@ -1,45 +1,57 @@
-# API Test React
+# 🚀 GeoDoc Mock Server Manager
 
-Application React pour tester une API avec authentification JWT.
+Application React moderne pour tester et simuler l'API GeoDoc dans le cadre du projet TM Web.
 
-## Fonctionnalités
+## ✨ Fonctionnalités
 
-- **Authentification JWT** : Login/logout avec stockage des tokens dans localStorage
-- **Rafraîchissement automatique** des tokens expirés
-- **Test des endpoints** :
-  - `/api/ping` - Ping serveur (sans auth)
-  - `/api/login` - Authentification
-  - `/api/refresh` - Rafraîchissement du token
-  - `/api/devices` - Liste des utilisateurs/appareils
-  - `/api/categories` - Types de terrain
-  - `/api/types-moraux` - Types moral
-  - `/api/reperes` - Positions riverain
-  - `/api/statuts-terrains` - Statuts terrain
-  - `/api/dossiers/statuts` - Dossiers statuts
-  - `/api/territoires` - Territoire hiérarchique
-  - `/api/cartes` - Fonds images MBTiles
+### 🔧 GeoDoc Mock Server
+- **Serveur Express** simulant l'API GeoDoc réelle
+- **Gestion des utilisateurs** : Création, mise à jour des statuts (pending, active, inactive)
+- **Transfert de dossiers** : Simulation complète du flux de transfert vers GeoDoc
+- **Endpoints RESTful** pour tester les intégrations
 
-## Installation
+### 🖥️ Interface de Management
+- **Tableau de bord moderne** avec Tailwind CSS
+- **Onglets organisés** :
+  - 👥 **Utilisateurs** : Gestion des utilisateurs mock et leurs statuts
+  - 📁 **Dossiers** : Visualisation des dossiers transférés
+  - 📋 **Logs** : Suivi en temps réel des requêtes API
+- **Indicateur de statut** du serveur (en ligne/hors ligne)
+- **Auto-refresh** toutes les 5 secondes
+- **Interface responsive** et professionnelle
+
+## 📦 Installation
 
 ```bash
+# Installation des dépendances
 npm install
 ```
 
-## Configuration
+## ⚙️ Configuration
 
-Modifiez le proxy dans `package.json` selon votre backend :
+Le proxy est configuré pour pointer vers le serveur mock GeoDoc :
 
 ```json
-"proxy": "http://localhost:5000"
+"proxy": "http://localhost:8005"
 ```
 
-Ou créez un fichier `.env` :
+**Variables d'environnement** (optionnel) :
 
 ```
-REACT_APP_API_URL=http://localhost:5000
+REACT_APP_API_URL=http://localhost:8005
 ```
 
-## Démarrage
+## 🚀 Démarrage
+
+### 1. Démarrer le serveur mock GeoDoc
+
+```bash
+npm run server
+```
+
+Le serveur sera disponible sur [http://localhost:8005](http://localhost:8005)
+
+### 2. Démarrer l'interface React
 
 ```bash
 npm start
@@ -47,30 +59,85 @@ npm start
 
 L'application sera disponible sur [http://localhost:3000](http://localhost:3000)
 
-## Structure du projet
+### 3. Utilisation avec tm_web
 
+Dans tm_web, configurez l'URL GeoDoc :
 ```
-src/
-├── ui/
-│   ├── tokens.js      # Design tokens (couleurs, etc.)
-│   ├── Btn.js         # Composant bouton
-│   ├── Card.js        # Composant carte
-│   └── index.js       # Exports UI
-├── TestCom.js         # Composant principal de test API
-├── App.js             # Composant racine
-├── index.js           # Point d'entrée
-└── index.css          # Styles globaux
+VITE_GEODOC_API_URL=http://localhost:8005
 ```
 
-## Utilisation
+## 📁 Structure du projet
 
-1. Cliquez sur **"Se connecter"** pour vous authentifier (login: admin, password: secret)
-2. Utilisez les boutons pour tester les différents endpoints
-3. Les réponses JSON s'affichent dans des blocs formatés
-4. La session reste active après rechargement de la page
+```
+teste_api_tm/
+├── server.js                 # 🖥️ Serveur Express mock GeoDoc
+├── public/
+│   └── index.html           # Template HTML avec Tailwind CSS
+├── src/
+│   ├── App.js               # 🎯 Composant racine avec navigation
+│   ├── GeoDocManager.js     # 🚀 Interface de management GeoDoc
+│   ├── TestCom.js           # 🔧 Composant de test API (original)
+│   ├── index.js             # Point d'entrée React
+│   └── index.css            # Styles globaux
+└── package.json
+```
 
-## Technologies utilisées
+## 📖 Guide d'utilisation
 
-- React 18
-- React Icons
-- CSS-in-JS (inline styles)
+### Gestion des utilisateurs GeoDoc
+
+1. **Créer un utilisateur** : Depuis tm_web, utilisez la fonction "Lier avec GeoDoc"
+2. **Modifier le statut** :
+   - Sélectionnez un utilisateur dans la liste
+   - Choisissez le nouveau statut (pending, active, inactive)
+   - Pour `active`, entrez un GeoDoc ID
+   - Cliquez sur "Mettre à jour le statut"
+3. **Observer les changements** : Retournez dans tm_web pour voir le statut mis à jour
+
+### Transfert de dossiers
+
+1. **Dans tm_web** : Trouvez un dossier avec le statut "VALIDE"
+2. **Cliquez sur "Transférer"** : Le dossier sera envoyé au serveur mock
+3. **Dans GeoDoc Manager** : Consultez l'onglet "Dossiers Transférés" pour voir le dossier
+4. **Vérifiez les logs** : Suivez les requêtes API en temps réel
+
+### Endpoints API disponibles
+
+**GeoDoc API** :
+- `GET /api/tm_geodoc/me?email=<email>` - Vérifier le statut utilisateur
+- `POST /api/tm_geodoc/register` - Enregistrer un utilisateur
+- `POST /api/tm_geodoc/dossier/transfer` - Transférer un dossier
+
+**Test Management** :
+- `POST /api/test/set-status` - Changer le statut utilisateur
+- `GET /api/test/users` - Lister les utilisateurs
+- `GET /api/test/dossiers` - Lister les dossiers transférés
+- `DELETE /api/test/users/:email` - Supprimer un utilisateur
+- `DELETE /api/test/dossiers/:id` - Supprimer un dossier
+
+## 🛠️ Technologies utilisées
+
+- **React 18** - Bibliothèque UI
+- **Tailwind CSS** - Framework CSS utilitaire (via CDN)
+- **Font Awesome** - Icônes
+- **Express.js** - Serveur backend mock
+- **CORS** - Gestion des requêtes cross-origin
+
+## 🎯 Scénarios de test
+
+### Scénario 1 : Lier un utilisateur
+1. Créer une liaison dans tm_web
+2. Observer l'utilisateur dans GeoDoc Manager (statut: pending)
+3. Changer le statut vers "active" avec GeoDoc ID
+4. Vérifier dans tm_web que le statut est mis à jour
+
+### Scénario 2 : Transférer un dossier
+1. Valider un dossier dans tm_web
+2. Cliquer sur "Transférer vers GeoDoc"
+3. Vérifier dans GeoDoc Manager que le dossier apparaît
+4. Consulter les logs pour voir les détails du transfert
+
+### Scénario 3 : Tester les erreurs
+1. Tentative de transfert sans dossier valide
+2. Vérification des messages d'erreur dans les logs
+3. Test de la récupération après erreur
